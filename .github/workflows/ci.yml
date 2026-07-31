@@ -21,37 +21,27 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
 
-      - name: Download the official licensed Redsea source
+      - name: Restore and verify the licensed Redsea daily dataset
+        shell: bash
         run: |
           set -euo pipefail
           mkdir -p data/raw /tmp/redsea
-          npm install --no-save --package-lock=false playwright@1.54.1
-          npx playwright install --with-deps chromium
-          node scripts/download_mendeley.mjs
-          test -s data/raw/Redsea-Dataset.zip
-          unzip -o data/raw/Redsea-Dataset.zip -d /tmp/redsea
-          SOURCE_FILE="$(find /tmp/redsea -type f -iname 'RedSea_Data_Cleaned.xlsx' -print -quit)"
-          test -n "$SOURCE_FILE"
-          cp "$SOURCE_FILE" data/raw/RedSea_Data_Cleaned.xlsx
-          echo 'dd994d25042e54119babe058820b02e00b3443fe18150b9213f9c6929466a645  data/raw/RedSea_Data_Cleaned.xlsx' | sha256sum --check
+          if [ -s data/raw/RedSea_Data_Cleaned.csv ]; then
+            echo 'Using the verified CSV already committed to the repository.'
+          else
+            test -d data/bootstrap/redsea-csv-gz
+            cat data/bootstrap/redsea-csv-gz/part-*.b64 > /tmp/redsea/RedSea_Data_Cleaned.csv.gz.b64
+            base64 --decode /tmp/redsea/RedSea_Data_Cleaned.csv.gz.b64 > /tmp/redsea/RedSea_Data_Cleaned.csv.gz
+            echo '59761a774894a7de568849756ccf1d74a354989e05ae238df3bb0eb36899fc65  /tmp/redsea/RedSea_Data_Cleaned.csv.gz' | sha256sum --check
+            gzip -dc /tmp/redsea/RedSea_Data_Cleaned.csv.gz > data/raw/RedSea_Data_Cleaned.csv
+          fi
+          echo 'c0e8c57748e18d6da0a7cf83909f85043946aa257c8799b151595120f5d7fb66  data/raw/RedSea_Data_Cleaned.csv' | sha256sum --check
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-training.txt
-
-      - name: Produce the verified UTF-8 CSV
-        run: |
-          python - <<'PY'
-          import pandas as pd
-          frame = pd.read_excel('data/raw/RedSea_Data_Cleaned.xlsx', engine='openpyxl')
-          frame.to_csv('data/raw/RedSea_Data_Cleaned.csv', index=False, encoding='utf-8-sig')
-          PY
-          echo 'c0e8c57748e18d6da0a7cf83909f85043946aa257c8799b151595120f5d7fb66  data/raw/RedSea_Data_Cleaned.csv' | sha256sum --check
 
       - name: Rebuild real database and model
         run: python scripts/build_from_redsea.py
@@ -84,8 +74,8 @@ jobs:
       - name: Run tests
         run: pytest -q
 
-      - name: Install Python Playwright browser
-        run: python -m playwright install chromium
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
 
       - name: Start application
         env:
