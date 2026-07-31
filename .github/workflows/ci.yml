@@ -94,13 +94,20 @@ jobs:
           assert {'users','sales','model_runs','forecasts','alerts','audit_logs'} <= tables
           PY
 
-      - name: Run tests
-        run: pytest tests/test_app.py -x -vv --tb=long
+      - name: Run tests with diagnostic log
+        id: pytest
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          pytest tests/test_app.py -x -vv --tb=long 2>&1 | tee /tmp/pytest.log
 
       - name: Install Chromium
+        if: steps.pytest.outcome == 'success'
         run: python -m playwright install --with-deps chromium
 
       - name: Start application
+        if: steps.pytest.outcome == 'success'
         env:
           SECRET_KEY: github-actions-test-secret
           SESSION_COOKIE_SECURE: '0'
@@ -113,10 +120,11 @@ jobs:
           curl -fsS http://127.0.0.1:5000/healthz
 
       - name: Capture live screenshots
+        if: steps.pytest.outcome == 'success'
         run: python scripts/capture_screenshots.py
 
       - name: Commit verified data, database and live evidence
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && steps.pytest.outcome == 'success'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -138,3 +146,8 @@ jobs:
             data/source_manifest.json
             reports/model_metrics.json
             /tmp/sales-sentinel.log
+            /tmp/pytest.log
+
+      - name: Enforce test result
+        if: steps.pytest.outcome == 'failure'
+        run: exit 1
