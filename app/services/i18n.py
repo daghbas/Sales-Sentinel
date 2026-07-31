@@ -123,17 +123,23 @@ def t(key: str) -> str:
     return TRANSLATIONS.get(current, {}).get(key, TRANSLATIONS["en"].get(key, key))
 
 
+def _number_locale() -> str:
+    # Babel does not ship an ``en_SA`` locale. Keep SAR as the currency while
+    # using the stable English number pattern for the English interface.
+    return "ar_SA" if locale() == "ar" else "en_US"
+
+
 def money(value: float | Decimal | None) -> str:
     if value is None:
         return "—"
-    return format_currency(value, "SAR", locale="ar_SA" if locale() == "ar" else "en_SA", currency_digits=True)
+    return format_currency(value, "SAR", locale=_number_locale(), currency_digits=True)
 
 
 def number(value: float | int | Decimal | None, digits: int = 0) -> str:
     if value is None:
         return "—"
     pattern = "#,##0" if digits == 0 else "#,##0." + ("0" * digits)
-    return format_decimal(value, format=pattern, locale="ar_SA" if locale() == "ar" else "en_SA")
+    return format_decimal(value, format=pattern, locale=_number_locale())
 
 
 def date_value(value: date | datetime | None) -> str:

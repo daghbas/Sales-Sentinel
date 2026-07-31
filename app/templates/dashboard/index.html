@@ -5,7 +5,7 @@
   <div><span class="eyebrow">{{ 'نظرة تنفيذية' if locale == 'ar' else 'Executive overview' }}</span><h1>{{ t('dashboard') }}</h1><p>{{ 'أداء آخر 30 يومًا متاحًا في الداتاسيت مع آخر توقع محفوظ.' if locale == 'ar' else 'The latest 30 available days with the most recent stored forecast.' }}</p></div>
   <a class="primary-button" href="{{ url_for('forecasting.index') }}">{{ t('run_forecast') }} <span>↗</span></a>
 </section>
-<div class="source-notice"><span class="source-dot"></span><div><strong>{{ 'مصدر حقيقي موثق' if locale == 'ar' else 'Verified real source' }}</strong><p>{{ t('demo_data_notice') }}</p></div><time>{{ date_value(summary.data_end) if summary.data_end else '—' }}</time></div>
+<div class="source-notice"><span class="source-dot"></span><div><strong>{{ 'مصدر حقيقي موثق' if locale == 'ar' else 'Verified real source' }}</strong><p>{{ t('demo_data_notice') }} · {{ number(summary.total_records) }} {{ 'سجل مبيعات فعلي بعد إزالة التكرارات' if locale == 'ar' else 'real sales rows after exact deduplication' }}</p></div><time>{{ date_value(summary.data_end) if summary.data_end else '—' }}</time></div>
 <section class="kpi-grid six">
   <article class="kpi-card featured"><small>{{ t('current_sales') }}</small><strong>{{ money(summary.current_sales) }}</strong><span class="{{ 'negative' if summary.change_percent < 0 else 'positive' }}">{{ '%+.1f'|format(summary.change_percent) }}%</span></article>
   <article class="kpi-card"><small>{{ 'المعاملات' if locale == 'ar' else 'Transactions' }}</small><strong>{{ number(summary.transactions) }}</strong><span>{{ money(summary.avg_transaction) }} / {{ 'فاتورة' if locale == 'ar' else 'invoice' }}</span></article>
