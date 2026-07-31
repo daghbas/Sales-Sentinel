@@ -31,6 +31,14 @@ jobs:
             echo 'Using the verified CSV already committed to the repository.'
           else
             test -d data/bootstrap/redsea-csv-gz
+            echo 'c0f2ae8272b54ce6783cd19db34fd855d284929d58d953c29d5b8e6c332834db  data/bootstrap/redsea-csv-gz/part-00.b64' | sha256sum --check
+            echo '43f3f32e2b1a63b1aa9ea8e010eb3a0ba8074550d207f51f49990259cac78cec  data/bootstrap/redsea-csv-gz/part-01.b64' | sha256sum --check
+            echo '949eb3fc54253c2298e6c83e0dbc191b7b1f18d3c6a60ff786630822175b5604  data/bootstrap/redsea-csv-gz/part-02.b64' | sha256sum --check
+            echo 'a397efb34999a92859b80142f9955244b1c98770d46a391609cc48635e26a769  data/bootstrap/redsea-csv-gz/part-03.b64' | sha256sum --check
+            echo '4b4a72fc4ce17f72c54855c2de69cead694dca8796076a1da3c9a6b83128cfa0  data/bootstrap/redsea-csv-gz/part-04.b64' | sha256sum --check
+            echo '37ceb478dcd0cf94dd606611cefa56b716223967a5accbc16b0a8e5f8f68dfb2  data/bootstrap/redsea-csv-gz/part-05.b64' | sha256sum --check
+            echo 'd93f9d25bf6f6db86e1772d39890a0eb182fb3320c4f0b2245919353e440046f  data/bootstrap/redsea-csv-gz/part-06.b64' | sha256sum --check
+            echo 'f6c634ad84f428b9e496af3127cb5ea67dd4c1c9edfa710b9be027e8b7d6af3f  data/bootstrap/redsea-csv-gz/part-07.b64' | sha256sum --check
             cat data/bootstrap/redsea-csv-gz/part-*.b64 > /tmp/redsea/RedSea_Data_Cleaned.csv.gz.b64
             base64 --decode /tmp/redsea/RedSea_Data_Cleaned.csv.gz.b64 > /tmp/redsea/RedSea_Data_Cleaned.csv.gz
             echo '59761a774894a7de568849756ccf1d74a354989e05ae238df3bb0eb36899fc65  /tmp/redsea/RedSea_Data_Cleaned.csv.gz' | sha256sum --check
