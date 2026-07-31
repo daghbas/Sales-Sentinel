@@ -1,1 +1,0 @@
-Trigger full-source restoration after bootstrap workflow exists on the default branch.
