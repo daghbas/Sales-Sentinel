@@ -8,19 +8,21 @@ from app.models import Alert, Forecast, ModelRun, Sale
 
 
 def dashboard_summary(db, allowed_branch_ids: set[int] | None = None) -> dict:  # type: ignore[no-untyped-def]
-    max_date = db.scalar(select(func.max(Sale.sale_date)))
+    def scoped(stmt):
+        return stmt.where(Sale.branch_id.in_(allowed_branch_ids)) if allowed_branch_ids else stmt
+
+    total_records = int(db.scalar(scoped(select(func.count(Sale.id)))) or 0)
+    max_date = db.scalar(scoped(select(func.max(Sale.sale_date))))
     if not max_date:
         return {
             "current_sales": 0, "previous_sales": 0, "change_percent": 0,
             "forecast_sales": 0, "decline_probability": 0, "active_alerts": 0,
             "transactions": 0, "returns": 0, "discounts": 0, "avg_transaction": 0,
             "series": [], "forecast_series": [], "latest_run": None, "top_alerts": [],
+            "total_records": total_records, "data_end": None,
         }
     current_start = max_date - timedelta(days=29)
     previous_start = current_start - timedelta(days=30)
-
-    def scoped(stmt):
-        return stmt.where(Sale.branch_id.in_(allowed_branch_ids)) if allowed_branch_ids else stmt
 
     current_sales = float(db.scalar(scoped(select(func.sum(Sale.net_sales)).where(Sale.sale_date.between(current_start, max_date)))) or 0)
     previous_sales = float(db.scalar(scoped(select(func.sum(Sale.net_sales)).where(Sale.sale_date.between(previous_start, current_start - timedelta(days=1))))) or 0)
@@ -67,5 +69,6 @@ def dashboard_summary(db, allowed_branch_ids: set[int] | None = None) -> dict:  
         "forecast_series": forecasts,
         "latest_run": latest_run,
         "top_alerts": top_alerts,
+        "total_records": total_records,
         "data_end": max_date,
     }
