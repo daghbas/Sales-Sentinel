@@ -23,11 +23,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          : > /tmp/project.tar.gz
-          for chunk in bootstrap/chunk-*.b64; do
-            base64 --decode "$chunk" >> /tmp/project.tar.gz
-          done
-          echo "9ddd6156a366605607adc713135c0fc8491f9c9c653d4bfd70cf662360cec3cf  /tmp/project.tar.gz" | sha256sum --check
+          python - <<'PY'
+          import base64, binascii, hashlib, pathlib, re
+          output = pathlib.Path('/tmp/project.tar.gz')
+          with output.open('wb') as destination:
+              for chunk in sorted(pathlib.Path('bootstrap').glob('chunk-*.b64')):
+                  raw = chunk.read_bytes()
+                  cleaned = re.sub(rb'[^A-Za-z0-9+/=]', b'', raw)
+                  cleaned += b'=' * (-len(cleaned) % 4)
+                  try:
+                      decoded = base64.b64decode(cleaned, validate=False)
+                  except binascii.Error as error:
+                      raise SystemExit(f'{chunk}: {error}')
+                  print(f'{chunk}: encoded={len(cleaned)} decoded={len(decoded)}')
+                  destination.write(decoded)
+          digest = hashlib.sha256(output.read_bytes()).hexdigest()
+          expected = '9ddd6156a366605607adc713135c0fc8491f9c9c653d4bfd70cf662360cec3cf'
+          print('archive_sha256=', digest)
+          if digest != expected:
+              raise SystemExit(f'Archive checksum mismatch: {digest} != {expected}')
+          PY
           mkdir -p /tmp/project
           tar -xzf /tmp/project.tar.gz -C /tmp/project
           rsync -a --delete --exclude='.git/' /tmp/project/ ./
