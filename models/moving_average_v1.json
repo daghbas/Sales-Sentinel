@@ -3,17 +3,67 @@
   "version": "redsea-ma7-v1",
   "window": 7,
   "selected_by": "lowest WAPE on chronological 25% hold-out",
-  "residual_quantiles": {"q10": -20499.887857142854, "q90": 27804.706857142854},
-  "evaluation": {"MAE": 18842.846785714286, "RMSE": 27515.69426227359, "WAPE": 0.7084570561109419, "sMAPE": 0.7139325503829591},
-  "all_candidates": {
-    "Naive lag-1": {"MAE": 22524.677916666667, "RMSE": 31679.152610039473, "WAPE": 0.8468872664605649, "sMAPE": 0.8282921811863705},
-    "Seasonal lag-7": {"MAE": 23133.538749999996, "RMSE": 38099.93507470655, "WAPE": 0.8697793357147507, "sMAPE": 0.7743995318391251},
-    "Moving average 7": {"MAE": 18842.846785714286, "RMSE": 27515.69426227359, "WAPE": 0.7084570561109419, "sMAPE": 0.7139325503829591},
-    "Moving average 28": {"MAE": 22430.456577380955, "RMSE": 27197.383484664533, "WAPE": 0.8433447140313961, "sMAPE": 0.7864047120548535},
-    "Extra Trees": {"MAE": 20803.813525572918, "RMSE": 26892.00797298774, "WAPE": 0.7821858689305095, "sMAPE": 0.7034849559801026}
+  "residual_quantiles": {
+    "q10": -20499.887857142854,
+    "q90": 27804.706857142854
   },
-  "decline_detection": {"threshold": 0.08, "Precision": 0.0, "Recall": 0.0, "F1": 0.0, "PR-AUC": 0.5416666666666666},
-  "training": {"observed_days": 121, "calendar_days": 123, "imputed_for_model_only": ["2023-09-01", "2023-09-15"], "train_rows": 71, "test_rows": 24, "test_start": "2023-10-08", "test_end": "2023-10-31"},
+  "evaluation": {
+    "MAE": 18842.846785714286,
+    "RMSE": 27515.69426227359,
+    "WAPE": 0.7084570561109419,
+    "sMAPE": 0.7139325503829591
+  },
+  "all_candidates": {
+    "Naive lag-1": {
+      "MAE": 22524.677916666667,
+      "RMSE": 31679.152610039473,
+      "WAPE": 0.8468872664605649,
+      "sMAPE": 0.8282921811863705
+    },
+    "Seasonal lag-7": {
+      "MAE": 23133.538749999996,
+      "RMSE": 38099.93507470655,
+      "WAPE": 0.8697793357147507,
+      "sMAPE": 0.7743995318391251
+    },
+    "Moving average 7": {
+      "MAE": 18842.846785714286,
+      "RMSE": 27515.69426227359,
+      "WAPE": 0.7084570561109419,
+      "sMAPE": 0.7139325503829591
+    },
+    "Moving average 28": {
+      "MAE": 22430.456577380955,
+      "RMSE": 27197.383484664533,
+      "WAPE": 0.8433447140313961,
+      "sMAPE": 0.7864047120548535
+    },
+    "Extra Trees": {
+      "MAE": 20803.813525572918,
+      "RMSE": 26892.00797298774,
+      "WAPE": 0.7821858689305096,
+      "sMAPE": 0.7034849559801026
+    }
+  },
+  "decline_detection": {
+    "threshold": 0.08,
+    "Precision": 0.0,
+    "Recall": 0.0,
+    "F1": 0.0,
+    "PR-AUC": 0.5416666666666666
+  },
+  "training": {
+    "observed_days": 121,
+    "calendar_days": 123,
+    "imputed_for_model_only": [
+      "2023-09-01",
+      "2023-09-15"
+    ],
+    "train_rows": 71,
+    "test_rows": 24,
+    "test_start": "2023-10-08",
+    "test_end": "2023-10-31"
+  },
   "limitations": [
     "The source covers one showroom and four months only.",
     "The model is a pilot and its WAPE is too high for production use.",

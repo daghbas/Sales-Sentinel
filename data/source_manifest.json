@@ -8,8 +8,11 @@
   "date_end": "2023-10-31",
   "observed_days": 121,
   "calendar_days": 123,
-  "missing_calendar_dates": ["2023-09-01", "2023-09-15"],
+  "missing_calendar_dates": [
+    "2023-09-01",
+    "2023-09-15"
+  ],
   "is_synthetic": false,
   "sama_weekly_used_for_training": false,
-  "generated_at_utc": "2026-07-31T20:58:06.734790+00:00"
+  "generated_at_utc": "2026-07-31T23:34:20.430602+00:00"
 }
