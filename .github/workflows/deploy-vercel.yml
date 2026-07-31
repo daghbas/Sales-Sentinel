@@ -1,0 +1,66 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'screenshots/**'
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate deployment credentials
+        id: credentials
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -n "$VERCEL_DEPLOY_HOOK_URL" ]; then
+            echo 'method=hook' >> "$GITHUB_OUTPUT"
+          elif [ -n "$VERCEL_TOKEN" ]; then
+            echo 'method=cli' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Missing VERCEL_TOKEN or VERCEL_DEPLOY_HOOK_URL in GitHub Actions secrets.' >&2
+            exit 1
+          fi
+
+      - name: Deploy through Vercel Deploy Hook
+        if: steps.credentials.outputs.method == 'hook'
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          response="$(curl --fail-with-body --silent --show-error -X POST "$VERCEL_DEPLOY_HOOK_URL")"
+          echo "$response"
+          echo "$response" > vercel-deployment.json
+
+      - uses: actions/setup-node@v4
+        if: steps.credentials.outputs.method == 'cli'
+        with:
+          node-version: '22'
+
+      - name: Deploy through Vercel CLI
+        if: steps.credentials.outputs.method == 'cli'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm install --global vercel@latest
+          vercel --prod --yes --token "$VERCEL_TOKEN" --scope mographiccode --name sales-sentinel | tee vercel-url.txt
+
+      - name: Upload deployment result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercel-deployment-result
+          path: |
+            vercel-url.txt
+            vercel-deployment.json
+          if-no-files-found: ignore
