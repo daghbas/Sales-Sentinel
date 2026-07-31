@@ -14,28 +14,36 @@ jobs:
   verify:
     if: ${{ github.event_name == 'pull_request' || (!contains(github.event.head_commit.message || '', '[generated]') && !contains(github.event.head_commit.message || '', '[screenshots]')) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Download the official licensed Redsea source
         run: |
           set -euo pipefail
           mkdir -p data/raw /tmp/redsea
-          curl --fail --location --retry 3 --user-agent 'Sales-Sentinel-Academic/1.0' \
-            'https://api.data.mendeley.com/datasets/9c87bd42ct/zip/file_downloaded?version=1' \
-            --output /tmp/Redsea-Dataset.zip
-          echo '836d329c66f90bd00f9dea781074d4636f0fbc7e5f9e095620541466d3eed5dc  /tmp/Redsea-Dataset.zip' | sha256sum --check
-          unzip -o /tmp/Redsea-Dataset.zip -d /tmp/redsea
-          cp '/tmp/redsea/Redsea Dataset/RedSea_Data_Cleaned.xlsx' data/raw/RedSea_Data_Cleaned.xlsx
+          npm install --no-save --package-lock=false playwright@1.54.1
+          npx playwright install --with-deps chromium
+          node scripts/download_mendeley.mjs
+          test -s data/raw/Redsea-Dataset.zip
+          unzip -o data/raw/Redsea-Dataset.zip -d /tmp/redsea
+          SOURCE_FILE="$(find /tmp/redsea -type f -iname 'RedSea_Data_Cleaned.xlsx' -print -quit)"
+          test -n "$SOURCE_FILE"
+          cp "$SOURCE_FILE" data/raw/RedSea_Data_Cleaned.xlsx
           echo 'dd994d25042e54119babe058820b02e00b3443fe18150b9213f9c6929466a645  data/raw/RedSea_Data_Cleaned.xlsx' | sha256sum --check
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-training.txt
+
       - name: Produce the verified UTF-8 CSV
         run: |
           python - <<'PY'
@@ -44,8 +52,10 @@ jobs:
           frame.to_csv('data/raw/RedSea_Data_Cleaned.csv', index=False, encoding='utf-8-sig')
           PY
           echo 'c0e8c57748e18d6da0a7cf83909f85043946aa257c8799b151595120f5d7fb66  data/raw/RedSea_Data_Cleaned.csv' | sha256sum --check
+
       - name: Rebuild real database and model
         run: python scripts/build_from_redsea.py
+
       - name: Verify generated data
         run: |
           python - <<'PY'
@@ -59,6 +69,7 @@ jobs:
           assert db.execute('select count(*) from sales').fetchone()[0]==2695
           assert db.execute('select count(*) from forecasts').fetchone()[0]==37
           PY
+
       - name: Verify Alembic from an empty database
         run: |
           rm -f /tmp/sales-sentinel-migration.db
@@ -69,10 +80,13 @@ jobs:
           tables={row[0] for row in db.execute("select name from sqlite_master where type='table'")}
           assert {'users','sales','model_runs','forecasts','alerts','audit_logs'} <= tables
           PY
+
       - name: Run tests
         run: pytest -q
-      - name: Install Chromium
-        run: python -m playwright install --with-deps chromium
+
+      - name: Install Python Playwright browser
+        run: python -m playwright install chromium
+
       - name: Start application
         env:
           SECRET_KEY: github-actions-test-secret
@@ -84,8 +98,10 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:5000/healthz
+
       - name: Capture live screenshots
         run: python scripts/capture_screenshots.py
+
       - name: Commit verified data, database and live evidence
         if: github.event_name == 'push'
         run: |
@@ -98,6 +114,7 @@ jobs:
             git commit -m 'build: add verified daily data database and live screenshots [generated]'
             git push
           fi
+
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4
