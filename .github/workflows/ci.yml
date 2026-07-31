@@ -3,6 +3,8 @@ name: Test, Build and Capture
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -10,7 +12,7 @@ permissions:
 
 jobs:
   verify:
-    if: ${{ !contains(github.event.head_commit.message || '', '[generated]') && !contains(github.event.head_commit.message || '', '[screenshots]') }}
+    if: ${{ github.event_name == 'pull_request' || (!contains(github.event.head_commit.message || '', '[generated]') && !contains(github.event.head_commit.message || '', '[screenshots]')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -85,6 +87,7 @@ jobs:
       - name: Capture live screenshots
         run: python scripts/capture_screenshots.py
       - name: Commit verified data, database and live evidence
+        if: github.event_name == 'push'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
